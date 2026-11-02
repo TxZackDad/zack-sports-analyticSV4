@@ -1,0 +1,10 @@
+// Automatic public-feed snapshots are separate from optional private workbook imports.
+let lastAutomaticStamp='';
+const health=document.createElement('section');health.className='panel data-health';
+document.querySelector('.sports').before(health);
+async function refreshAutomatic(){try{
+ const r=await fetch('sync-status.json',{cache:'no-store'});if(!r.ok)throw Error('Feed status unavailable');const status=await r.json();
+ health.innerHTML='<details><summary>Data connections · 9 sports <span class="small">Automatic free feeds / coverage</span></summary><p>Saved snapshot copied Nov 2, 2026. Automatic refresh on GitHub is being set up. Fetch time is not the provider’s game cutoff.</p><div class="tablewrap"><table><thead><tr><th>Sport</th><th>Roster</th><th>Feed checked</th><th>Coverage</th><th>Still needs a live source</th></tr></thead><tbody>'+Object.entries(status.sports).map(([s,v])=>'<tr><td>'+esc(s)+'</td><td>'+esc(v.teams??'—')+'</td><td>'+esc(v.lastSuccessAt?new Date(v.lastSuccessAt).toLocaleString():'Never')+'</td><td>'+esc(v.status)+' · '+(v.filled??0)+'/'+(v.total??0)+' values'+(v.retainedSnapshotValues?' · '+v.retainedSnapshotValues+' saved snapshot values':'')+(v.error?' · '+esc(v.error):'')+'</td><td>'+esc((v.unavailableMetrics??[]).join(', ')||'All displayed metrics connected')+'</td></tr>').join('')+'</tbody></table></div><p>Soccer covers returned clubs in six domestic leagues; tennis includes the official WTA statistics roster, with ATP still unavailable. Advanced snapshots remain dated and are not counted as live feeds. No paid data or automatic wagering.</p></details>';
+ if(typeof data!=='undefined'&&data&&typeof accessToken!=='undefined'&&!accessToken&&status.attemptedAt!==lastAutomaticStamp){const next=await fetch('data.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Snapshot unavailable');return r.json()});data=next;lastAutomaticStamp=status.attemptedAt;render();}
+ }catch(e){health.textContent='Automatic feed status unavailable. Showing the last saved statistics.'}}
+refreshAutomatic();setInterval(refreshAutomatic,300000);
